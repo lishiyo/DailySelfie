@@ -1,5 +1,7 @@
 package com.cziyeli.dailyselfie;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -19,6 +22,7 @@ import android.widget.Toast;
 
 import com.cziyeli.dailyselfie.adapters.SelfiesAdapter;
 import com.cziyeli.dailyselfie.models.Selfie;
+import com.cziyeli.dailyselfie.receivers.AlarmReceiver;
 import com.cziyeli.dailyselfie.services.PhotoClearService;
 import com.cziyeli.dailyselfie.services.PhotoSaveService;
 
@@ -33,13 +37,23 @@ public class MainActivity extends AppCompatActivity {
     private String mCurrentPhotoPath = null;
     private Uri mCapturedImageURI = null;
 
-    public ListView mListView;
-    public Button mClearButton;
+    private ListView mListView;
+    private Button mClearButton;
 
-    PhotoSaveReceiver mSaveReceiver;
-    PhotoClearReceiver mClearReceiver;
-    SelfiesAdapter mAdapter;
-    ArrayList<Selfie> mSelfiesList;
+    private PhotoSaveReceiver mSaveReceiver;
+    private PhotoClearReceiver mClearReceiver;
+    private SelfiesAdapter mAdapter;
+    private ArrayList<Selfie> mSelfiesList;
+
+    // Alarm every 2 minutes
+    private AlarmManager alarmManager;
+    private PendingIntent alarmIntent;
+    private static long interval = (SystemClock.elapsedRealtime() + (2 * 60 * 1000));
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +65,18 @@ public class MainActivity extends AppCompatActivity {
         mClearButton.setOnClickListener(mClearAllListener);
 
         getAndSetSelfies();
+
+        startAlarm();
+    }
+
+    private void startAlarm() {
+        // Launch a pending intent to broadcast to AlarmReceiver
+        alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        final Intent receiverIntent = new Intent(this, AlarmReceiver.class);
+        alarmIntent = PendingIntent.getBroadcast(this, 0, receiverIntent, 0);
+
+        // Set an alarm for every 2 minutes
+        alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME, interval, interval, alarmIntent);
     }
 
     @Override
@@ -93,11 +119,14 @@ public class MainActivity extends AppCompatActivity {
         if (mSaveReceiver != null) {
             unregisterReceiver(mSaveReceiver);
         }
+        if (mClearReceiver != null) {
+            unregisterReceiver(mClearReceiver);
+        }
     }
 
     private void getAndSetSelfies() {
-        // Convert list of selfies to array list
-        mSelfiesList = new ArrayList(Selfie.listAll(Selfie.class));
+        // Fetch list of selfies from database as array
+        mSelfiesList = Selfie.getAllSelfies();
         // Create the adapter to convert the array to views
         mAdapter = new SelfiesAdapter(this, mSelfiesList);
         // Attach the adapter to the ListView
@@ -198,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
      *
      * PhotoSaveService - async save the new photo into our sqlite database.
      *
-     * PhotoClearService - clear all selfies from database and our list.
+     * PhotoClearService - async clear all selfies from database.
      */
 
     protected void startSaveService() {
@@ -213,8 +242,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getBooleanExtra(PhotoSaveService.ACTION_SUCCESS, false)) {
-
-                // Add just-saved selfie from the intent service to mSelfiesList
                 final Selfie newSelfie = intent.getExtras().getParcelable(Selfie.SELFIE_PARCEL);
                 mSelfiesList.add(newSelfie);
 
@@ -236,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
                 mSelfiesList.clear();
                 getAdapter().notifyDataSetChanged();
 
-                // Make a toast
+                Toast.makeText(MainActivity.this, "all gone :)", Toast.LENGTH_SHORT);
             }
         }
     }

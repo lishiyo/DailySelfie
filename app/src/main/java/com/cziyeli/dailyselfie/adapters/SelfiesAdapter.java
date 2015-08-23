@@ -48,7 +48,9 @@ public class SelfiesAdapter extends ArrayAdapter<Selfie> {
 
             viewHolder.mSelfieThumbnail = (ImageView) convertView.findViewById(R.id.selfie_thumbnail);
             viewHolder.mSelfieDescription = (TextView) convertView.findViewById(R.id.selfie_description);
+            // Click on a row to to open up full photo.
             viewHolder.mSelfieThumbnail.setOnClickListener(mClickSelfieListener);
+            viewHolder.mSelfieDescription.setOnClickListener(mClickSelfieListener);
 
             convertView.setTag(viewHolder);
         } else {
@@ -60,8 +62,8 @@ public class SelfiesAdapter extends ArrayAdapter<Selfie> {
         viewHolder.setPic(currentPhotoPath, viewHolder.mSelfieThumbnail);
         viewHolder.setDescription(selfie.getDescription());
 
-        // Add the photo path as a tag on the thumbnail to launch activity
-        viewHolder.setImagePathOnView(currentPhotoPath);
+        // Add the photo path as a tag on the row to launch activity
+        viewHolder.setImagePathOnRow(currentPhotoPath);
 
         return convertView;
     }
@@ -74,12 +76,13 @@ public class SelfiesAdapter extends ArrayAdapter<Selfie> {
             if (!path.isEmpty()) {
                 final Intent intent = new Intent(mContext, SelfieActivity.class);
                 intent.putExtra(SelfieActivity.CAPTURED_PHOTO_PATH_KEY, path);
+
                 mContext.startActivity(intent);
             }
         }
     };
 
-    // View cache
+    // ViewHolder is the cache
     public static class ViewHolder {
         ImageView mSelfieThumbnail;
         TextView mSelfieDescription;
@@ -133,8 +136,9 @@ public class SelfiesAdapter extends ArrayAdapter<Selfie> {
             mSelfieDescription.setText(description);
         }
 
-        public void setImagePathOnView(String imagePath) {
+        public void setImagePathOnRow(String imagePath) {
             mSelfieThumbnail.setTag(imagePath);
+            mSelfieDescription.setTag(imagePath);
         }
 
     }

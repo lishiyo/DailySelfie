@@ -6,6 +6,7 @@
     <uses-feature android:name="android.hardware.camera"
                   android:required="true" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
@@ -33,7 +34,13 @@
             android:name=".services.PhotoClearService"
             android:exported="false" />
 
-        <!-- sugar orm -->
+        <!-- Alarm -->
+        <service
+            android:name=".services.AlarmService"
+            android:enabled="true" />
+        <receiver android:name=".receivers.AlarmReceiver" />
+
+        <!-- Sqlite database -->
         <meta-data android:name="DATABASE" android:value="daily_selfies.db" />
         <meta-data android:name="VERSION" android:value="2" />
         <meta-data android:name="QUERY_LOG" android:value="true" />

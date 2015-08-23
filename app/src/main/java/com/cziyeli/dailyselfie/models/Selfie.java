@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import com.orm.SugarRecord;
 
+import java.util.ArrayList;
+
 /**
  * Selfie columns - path to the image file, description, fixed timestamp
  */
@@ -34,6 +36,10 @@ public class Selfie extends SugarRecord<Selfie> implements Parcelable {
 
     public String getDescription() {
         return description;
+    }
+
+    public static ArrayList<Selfie> getAllSelfies() {
+        return new ArrayList(Selfie.listAll(Selfie.class));
     }
 
     /** Parcelable methods **/
