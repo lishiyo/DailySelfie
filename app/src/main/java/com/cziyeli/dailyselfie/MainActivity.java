@@ -12,11 +12,14 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.cziyeli.dailyselfie.adapters.SelfiesAdapter;
 import com.cziyeli.dailyselfie.models.Selfie;
+import com.cziyeli.dailyselfie.services.PhotoClearService;
 import com.cziyeli.dailyselfie.services.PhotoSaveService;
 
 import java.io.File;
@@ -31,7 +34,10 @@ public class MainActivity extends AppCompatActivity {
     private Uri mCapturedImageURI = null;
 
     public ListView mListView;
+    public Button mClearButton;
+
     PhotoSaveReceiver mSaveReceiver;
+    PhotoClearReceiver mClearReceiver;
     SelfiesAdapter mAdapter;
     ArrayList<Selfie> mSelfiesList;
 
@@ -39,7 +45,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         mListView = (ListView) findViewById(R.id.list);
+        mClearButton = (Button) findViewById(R.id.clear_selfies);
+        mClearButton.setOnClickListener(mClearAllListener);
 
         getAndSetSelfies();
     }
@@ -67,9 +76,15 @@ public class MainActivity extends AppCompatActivity {
 
         // Register photo saving receiver
         mSaveReceiver = new PhotoSaveReceiver();
-        IntentFilter intentFilter = new IntentFilter(PhotoSaveService.ACTION_RESPONSE);
-        intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(mSaveReceiver, intentFilter);
+        IntentFilter saveFilter = new IntentFilter(PhotoSaveService.ACTION_RESPONSE);
+        saveFilter.addCategory(Intent.CATEGORY_DEFAULT);
+        registerReceiver(mSaveReceiver, saveFilter);
+
+        // Register photo clearing receiver
+        mClearReceiver = new PhotoClearReceiver();
+        IntentFilter clearFilter = new IntentFilter(PhotoClearService.ACTION_RESPONSE);
+        clearFilter.addCategory(Intent.CATEGORY_DEFAULT);
+        registerReceiver(mClearReceiver, clearFilter);
     }
 
     @Override
@@ -88,6 +103,14 @@ public class MainActivity extends AppCompatActivity {
         // Attach the adapter to the ListView
         mListView.setAdapter(mAdapter);
     }
+
+    public View.OnClickListener mClearAllListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            // async clear
+            startClearService();
+        }
+    };
 
     /** CAMERA LOGIC **/
 
@@ -170,7 +193,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /** Start the intent service to async save the photo into our sqlite database. **/
+    /**
+     * Intent services and broadcast receivers.
+     *
+     * PhotoSaveService - async save the new photo into our sqlite database.
+     *
+     * PhotoClearService - clear all selfies from database and our list.
+     */
 
     protected void startSaveService() {
         final Intent saveIntent = new Intent(MainActivity.this, PhotoSaveService.class);
@@ -190,6 +219,24 @@ public class MainActivity extends AppCompatActivity {
                 mSelfiesList.add(newSelfie);
 
                 getAdapter().notifyDataSetChanged();
+            }
+        }
+    }
+
+    protected void startClearService() {
+        final Intent clearIntent = new Intent(MainActivity.this, PhotoClearService.class);
+        startService(clearIntent);
+    }
+
+    public class PhotoClearReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getBooleanExtra(PhotoClearService.ACTION_SUCCESS, false)) {
+                mSelfiesList.clear();
+                getAdapter().notifyDataSetChanged();
+
+                // Make a toast
             }
         }
     }

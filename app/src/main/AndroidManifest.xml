@@ -29,6 +29,9 @@
         <service
             android:name=".services.PhotoSaveService"
             android:exported="false" />
+        <service
+            android:name=".services.PhotoClearService"
+            android:exported="false" />
 
         <!-- sugar orm -->
         <meta-data android:name="DATABASE" android:value="daily_selfies.db" />
