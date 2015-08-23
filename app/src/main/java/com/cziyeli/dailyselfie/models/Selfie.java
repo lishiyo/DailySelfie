@@ -6,14 +6,14 @@ import android.os.Parcelable;
 import com.orm.SugarRecord;
 
 /**
- * Selfie columns - path to the image file, description, timestamp
+ * Selfie columns - path to the image file, description, fixed timestamp
  */
 
 public class Selfie extends SugarRecord<Selfie> implements Parcelable {
     public String imagePath;
     public String description;
     public long timestamp;
-    public static final String SELFIE_PARCEL = "come.cziyeli.dailyselfie.models.Selfie";
+    public static final String SELFIE_PARCEL = "com.cziyeli.dailyselfie.models.Selfie";
 
     // no-argument constructor required for SugarORM
     public Selfie() {
@@ -50,7 +50,8 @@ public class Selfie extends SugarRecord<Selfie> implements Parcelable {
 
     /**
      * Actual object serialization happens here, Write object content
-     * to parcel one by one, reading should be done according to this write order
+     * to parcel one by one, reading should be done according to this write order.
+     *
      * @param dest parcel
      * @param flags Additional flags about how the object should be written
      */
